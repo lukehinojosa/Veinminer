@@ -8,9 +8,9 @@ pluginManagement {
 }
 
 include(":core")
-include(":veinminer-paper")
+//include(":veinminer-paper")
 include(":veinminer-fabric")
-include(":veinminer-enchant")
+//include(":veinminer-enchant")
 include(":veinminer-client")
 
 include(":datapacks")

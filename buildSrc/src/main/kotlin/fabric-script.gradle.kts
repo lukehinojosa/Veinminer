@@ -45,11 +45,10 @@ dependencies {
     //
     val silkVersion = properties["silkVersion"] as String
     println("Silk: $silkVersion")
-    modImplementation("net.silkmc", "silk-core", silkVersion)
-    modImplementation("net.silkmc", "silk-commands", silkVersion) // easy command registration
-    modImplementation("net.silkmc", "silk-nbt", silkVersion) // item simplification
-    modImplementation("net.silkmc", "silk-network", silkVersion)
-
+    modImplementation(project.files("../libs/silk-core-1.11.1.jar"))
+    modImplementation(project.files("../libs/silk-commands-1.11.1.jar"))
+    modImplementation(project.files("../libs/silk-nbt-1.11.1.jar"))
+    modImplementation(project.files("../libs/silk-network-1.11.1.jar"))
 
     //
     // Permissions configuration (optional)
