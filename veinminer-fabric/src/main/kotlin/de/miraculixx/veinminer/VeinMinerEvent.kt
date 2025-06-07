@@ -3,6 +3,7 @@ package de.miraculixx.veinminer
 import de.miraculixx.veinminer.Veinminer.Companion.VEINMINE
 import de.miraculixx.veinminer.Veinminer.Companion.active
 import de.miraculixx.veinminer.Veinminer.Companion.enchantmentActive
+import de.miraculixx.veinminer.compat.AutoPickupApiInvoker
 import de.miraculixx.veinminer.config.ConfigManager
 import de.miraculixx.veinminer.config.data.FixedBlockGroup
 import de.miraculixx.veinminer.config.data.VeinminerSettings
@@ -10,6 +11,7 @@ import de.miraculixx.veinminer.config.utils.permissionVeinmine
 import de.miraculixx.veinminer.networking.FabricNetworking
 import me.lucko.fabric.api.permissions.v0.Permissions
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents
+import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
@@ -32,6 +34,7 @@ import java.util.*
 
 object VeinMinerEvent {
     private val cooldown = mutableSetOf<UUID>()
+    private val isAutoPickupLoaded = FabricLoader.getInstance().isModLoaded("auto-pickup")
 
     /**
      * @return a set of all blocks in the same group as this material. If the material is not in a group, it will return an empty set
@@ -215,10 +218,25 @@ object VeinMinerEvent {
         initialSource: BlockPos
     ) {
         val serverLevel = world as? ServerLevel ?: return
-        Block.getDrops(blockState, serverLevel, blockPos, blockEntity, breaker, tool).forEach { drop: ItemStack ->
-            val dropPos = if (ConfigManager.settings.mergeItemDrops) initialSource else blockPos
-            Block.popResource(world, dropPos, drop)
+        val drops = Block.getDrops(blockState, serverLevel, blockPos, blockEntity, breaker, tool)
+
+        // Determine which drops were not automatically picked up.
+        val unpickedDrops: List<ItemStack> = if (isAutoPickupLoaded && breaker is Player) {
+            // If AutoPickup is loaded, call its API and get the list of remaining items.
+            AutoPickupApiInvoker.tryPickup(breaker, drops)
+        } else {
+            // Otherwise, all calculated drops are considered "unpicked".
+            drops
         }
+
+        // Drop any remaining items into the world.
+        if (unpickedDrops.isNotEmpty()) {
+            val dropPos = if (ConfigManager.settings.mergeItemDrops) initialSource else blockPos
+            unpickedDrops.forEach { drop ->
+                Block.popResource(world, dropPos, drop)
+            }
+        }
+
         blockState.spawnAfterBreak(serverLevel, blockPos, tool, true)
     }
 

@@ -51,6 +51,11 @@ dependencies {
     modImplementation(project.files("../libs/silk-network-1.11.1.jar"))
 
     //
+    // AutoPickup library
+    //
+    modImplementation(project.files("../libs/auto-pickup-1.1.1.jar"))
+
+    //
     // Permissions configuration (optional)
     //
     val usePermissions = properties["usePermissions"] as String == "true"
